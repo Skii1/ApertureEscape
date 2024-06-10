@@ -7,6 +7,44 @@ use crossterm::{
 
 use ratatui::{prelude::*, widgets::*};
 
+mod app;
+mod tui;
+
+pub struct StatefulList<T> {
+    pub state: ListState,
+    pub items: Vec<T>,
+}
+
+impl<T> StatefulList<T> {
+pub fn next(&mut self) {
+    let i = match self.state.selected() {
+        Some(i) => {
+            if i >= self.items.len() - 1 {
+                0
+            } else {
+                i + 1
+            }
+        }
+        None => 0,
+    };
+    self.state.select(Some(i));
+}
+
+pub fn previous(&mut self) {
+    let i = match self.state.selected() {
+        Some(i) => {
+            if i == 0 {
+                self.items.len() - 1
+            } else {
+                i - 1
+            }
+        }
+        None => 0,
+    };
+    self.state.select(Some(i));
+    }
+}
+
 //boilerplate
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
@@ -30,15 +68,18 @@ fn handle_events() -> io::Result<bool> {
             if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('q') {
                 return Ok(true);
             }
+            if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('w') {
+            }
+            if key.kind == event::KeyEventKind::Press && key.code == KeyCode::Char('s') {
+            }
+
         }
     }
     Ok(false)
 }
-
 //boilerplate END
 
 ///todo? pass ui framework to "App"
-
 fn ui(frame: &mut Frame) {
     let main_layout = Layout::new(
         Direction::Vertical,
@@ -60,13 +101,16 @@ fn ui(frame: &mut Frame) {
     );
 
     //define main menu components/objects
-    let mut state = ListState::default();
+    let mut state = ListState::default().with_selected(Some(0));
     let items = ["Continue", "New Game", "Exit"];
     let main_menu = List::new(items)
         .block(Block::bordered().title("Main Menu"))
         .highlight_style(Style::new().add_modifier(Modifier::REVERSED))
         .highlight_symbol("->")
         .repeat_highlight_symbol(true);
+
+    *state.offset_mut() = 0;
+    state.select(Some(0));
 
     let menupar = Paragraph::new(Text::from("Welcome to Aperture Escape.\nNavigate the Menu using \"W, A, S, D\" or \"Up, Down, Left, Right\""))
         .block(Block::bordered().title("Welcome"))
